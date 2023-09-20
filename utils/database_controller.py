@@ -20,7 +20,7 @@ class DatabaseController:
                                 )"""
                             )
     
-    def create_guild(self, guild_id: int, auto_shuffle: bool=False, prefix: str ="<", volume: int =100, auto_queue: bool =False):
+    def create_guild(self, guild_id: int, auto_shuffle: bool=False, prefix: str ="<", volume: int =15, auto_queue: bool =False):
         self.cursor.execute("""
                             INSERT INTO guilds 
                                 VALUES(?, ?, ?, ?, ?)""", 
