@@ -48,6 +48,9 @@ async def update_nowplaying(guild_id: int, player: wavelink.Player):
                 except discord.NotFound:
                     CACHED_BOT_DICT[guild_id]["LastNPMessage"] = None
                     CACHED_BOT_DICT[guild_id]["LastCTX"] = None
+                except AttributeError:
+                    CACHED_BOT_DICT[guild_id]["LastNPMessage"] = None
+                    CACHED_BOT_DICT[guild_id]["LastCTX"] = None
 
 class EventsController(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
