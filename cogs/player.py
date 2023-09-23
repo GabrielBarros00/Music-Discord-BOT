@@ -1,5 +1,4 @@
-from datetime import timedelta
-from random import shuffle, choice
+from random import shuffle
 
 import discord
 import wavelink
@@ -7,8 +6,8 @@ from discord.ext import commands
 from wavelink.ext import spotify
 from wavelink.ext.spotify import SpotifySearchType
 
-from constants import CACHED_BOT_DICT
-from utils import database_manager, get_wavelink_player
+from utils import (NowPlayingEmbed, NowPlayingManager, Play, database_manager,
+                   get_nowplaying_manager, get_wavelink_player)
 
 
 class Player(commands.Cog):
@@ -19,8 +18,14 @@ class Player(commands.Cog):
     async def play(self, ctx: commands.Context, *, search: str) -> None:
         """
         Play command.
-        
-        Accepts Youtube, Spotify, SoundCloud, Twitch and Others(Remote Stream)...
+
+        Accepts YouTube, Spotify, SoundCloud, Twitch, and others (Remote Stream)...
+
+        Parameters:
+        - search (str): The search term or link of the song to play.
+
+        Example usage:
+        !play Despacito
         """
         async def GetAllSpotify_Songs(iterator: iter):
             tracks = list()
@@ -52,7 +57,7 @@ class Player(commands.Cog):
         
         auto_shuffle = database_manager.get_values(int(ctx.guild.id), 'auto_shuffle')["auto_shuffle"]
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
-        vc.autoplay = True
+        
         IsSpotifyTrack = spotify.decode_url(search)
         
         if IsSpotifyTrack:
@@ -63,46 +68,35 @@ class Player(commands.Cog):
         else:
             track: wavelink.YouTubeTrack = await wavelink.YouTubeTrack.search(search)
         
-        embed = discord.Embed(color=discord.Color.green())
-        if isinstance(track, (wavelink.YouTubePlaylist, wavelink.SoundCloudPlaylist)):
-            embed.title = 'Playlist Enqueued!'
-            embed.description = f'{track.name} - {len(track.tracks)} tracks'
-            if not wavelink.SoundCloudPlaylist:
-                embed.set_image(url=await track.tracks[track.selected_track].fetch_thumbnail())
-            track = track.tracks
-            embed.description = f'Total songs: {len(track)}'                
-        elif isinstance(track, list):
-            if isinstance(track[0], spotify.SpotifyTrack):
-                if len(track) > 1:
-                    embed.title = 'Playlist Enqueued!'
-                    embed.description = f'Total songs: {len(track)}'
-                    embed.set_image(url=choice(track).images[0])
-                else:
-                    track = track[0]
-                    embed.title = 'Track Enqueued'
-                    embed.description = f'{track.title}'
-                    embed.set_image(url=track.images[0])
-            else:
-                embed.title = 'Track Enqueued'
-                track = track[0]
-                embed.set_image(url=await track.fetch_thumbnail())
-                embed.description = f'[{track.title}]({track.uri})'
+        play = Play(track, ctx)
         
-        await play_track(track)
+        embed = await play.embed
+        track = play.track
+        
         if ctx.message.embeds:
             await ctx.message.delete()
         else:
-            await ctx.message.delete(delay=5)
+            await ctx.message.delete()
+        np_manager: NowPlayingManager = get_nowplaying_manager(self, ctx.guild.id)
+        if np_manager.last_np_message:
+            try:
+                await np_manager.last_np_message.delete()
+            except discord.NotFound:
+                pass
         message = await ctx.send(embed=embed)
+        np_manager.last_np_message = message
+        await play_track(track)
         
-        CACHED_BOT_DICT[ctx.guild.id]["LastCTX"] = ctx
-        CACHED_BOT_DICT[ctx.guild.id]["Player"] = vc
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
     @commands.command(aliases=['dc', 'stop'])
     async def disconnect(self, ctx: commands.Context) -> None:
         """
         Disconnect/Stop player command.
+
+        Parameters:
+
+        Example usage:
+        !disconnect
         """
         if not ctx.voice_client:
             # We can't disconnect, if we're not connected.
@@ -113,23 +107,26 @@ class Player(commands.Cog):
             vc.queue.reset()
             if vc.queue.is_empty:
                 guild_id = int(ctx.guild.id)
-                INFOS_DICT: dict = CACHED_BOT_DICT.get(guild_id)
-                last_np_message: discord.Message = INFOS_DICT.get("LastNPMessage")
+                np_manager: NowPlayingManager = get_nowplaying_manager(self, guild_id)
+                last_np_message = np_manager.last_np_message
                 if last_np_message:
                     try:
                         await last_np_message.delete()
                     except discord.NotFound:
                         pass
-                    INFOS_DICT["DeleteOLD"] = False
                     last_np_message: discord.Message = None
             await vc.disconnect()
             await ctx.send('*⃣ | Disconnected.')
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
     @commands.command(aliases=['retomar'])
     async def resume(self, ctx: commands.Context):
         """
         Resume the current song.
+
+        Parameters:
+
+        Example usage:
+        !resume
         """
         self.canal_atual = ctx.channel.id
         # Criando uma variavel para gerenciar o player do bot.
@@ -144,12 +141,16 @@ class Player(commands.Cog):
             # Caso esteja pausado. Será despausado o player.
             await vc.resume()
             await ctx.send(f'**`{ctx.author.name}`**: Resumed the song!')
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
     @commands.command(aliases=['pausar'])
     async def pause(self, ctx: commands.Context):
         """
         Pause the current song.
+
+        Parameters:
+
+        Example usage:
+        !pause
         """
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
         # verificar se há musicas tocando para pausar ou não
@@ -163,11 +164,18 @@ class Player(commands.Cog):
         else:
             await vc.pause()
             await ctx.send(f'**`{ctx.author.name}`**: Paused the song!')
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
     @commands.command()
     async def seek(self, ctx: commands.Context, *, seconds: int):
-        """Jump to a specific time in the current track"""
+        """
+        Jump to a specific time in the current track.
+
+        Parameters:
+        - seconds (int): The time in seconds to jump to in the current track.
+
+        Example usage:
+        !seek 60
+        """
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
         if vc.is_playing and not vc.is_paused():
             if not vc.current.is_seekable:
@@ -179,38 +187,43 @@ class Player(commands.Cog):
             await ctx.send(f'**`Jumped to {seconds} seconds in the song.`**')
         else:
             await ctx.send("**`I'm not playing anything!`**")
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
     @commands.command(aliases=['vol', 'volume', 'changevolume'])
-    async def change_volume(self, ctx: commands.Context, *, vol: float):
-        """Change the player volume.
-        Parameters
-        ------------
-        volume: int [Required]
-            The volume to set the player to in percentage. This must be between 1 and 1000.
+    async def change_volume(self, ctx: commands.Context, *, vol: float = None):
         """
-        if not 0 < vol < 1001:
-            CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
+        Change the player volume.
+
+        Parameters:
+        - vol (float, int ,optional): The desired volume in percentage (1 to 1000).
+
+        Example usage:
+        !change_volume 50
+        """
+        vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
+        if not vol:
+            await ctx.send(f'**`Current volume:`** **{vc.volume}%**')
+        elif not 0 < vol < 1001:
             await ctx.send('Invalid Volume arguments, the volume needs to be between 1 and 1000.')
         elif not isinstance(vol, (float, int)):
-            CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
             await ctx.send('Invalid Volume arguments, the volume needs to be and Integer.')
         else:
-            vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
-            
             await vc.set_volume(vol)
             database_manager.update_values(int(ctx.guild.id), volume=vol)
             await ctx.send(f'**`{ctx.author.name}`**: Definiu o volume para **{vol}%**')
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
     @commands.command(aliases=["pularpara", "skipto"])
     async def skip_to(self, ctx: commands.Context, *, index: int):
         """
         Skip to a specific song in the queue.
+
+        Parameters:
+        - index (int): The index of the song in the queue to skip to.
+
+        Example usage:
+        !skip_to 3
         """
         index = int(index)
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
         if index <= 0:
             await ctx.send(f'**`Invalid SkipTo arguments, the index can\'t be lower than 0`**')
         elif index == 1:
@@ -223,12 +236,16 @@ class Player(commands.Cog):
             for _ in range(index-1):
                 del vc.queue._queue[0]
             await vc.stop()
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
     @commands.command(aliases=["pular"])
     async def skip(self, ctx: commands.Context):
         """
         Skip the current song.
+
+        Parameters:
+
+        Example usage:
+        !skip
         """
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
         if not vc.queue.is_empty or vc.current:
@@ -236,64 +253,66 @@ class Player(commands.Cog):
             await vc.stop()
         else:
             await ctx.send("**`Queue is empty!`**")
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
-    @commands.command(aliases=["loop_all", "loop_song", "loopall", "loopsong"])
-    async def loop(self, ctx: commands.Context, *, loop: str =None):
-        """
-        Set the loop mode.
-        """
-        vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
-        if loop:
-            loop = loop.lower().strip()
-            if loop in ["all", "queue"]:
-                vc.queue.loop = False
-                vc.queue.loop_all = True
-                await ctx.send(f'**`{ctx.author.name}`**: Definiu o loop para: **QUEUE**')
-            elif loop == ["single", "song"]:
-                vc.queue.loop_all = False
-                vc.queue.loop = True
-                await ctx.send(f'**`{ctx.author.name}`**: Definiu o loop para: **SONG**')
-            elif loop == ["off", "disable", "disabled"]:
-                vc.queue.loop = False
-                vc.queue.loop = False
-                await ctx.send(f'**`{ctx.author.name}`**: Loop status: **DESATIVADO**')
-        else:
-            if not vc.queue.loop and not vc.queue.loop_all:
-                vc.queue.loop = True
-                vc.queue.loop_all = False
-                await ctx.send(f'**`{ctx.author.name}`**: Definiu o loop para: **SONG**')
-            elif vc.queue.loop and not vc.queue.loop_all:
-                vc.queue.loop = False
-                vc.queue.loop_all = True
-                await ctx.send(f'**`{ctx.author.name}`**: Definiu o loop para: **QUEUE**')
-            elif vc.queue.loop_all and not vc.queue.loop:
-                vc.queue.loop = False
-                vc.queue.loop = False
-                await ctx.send(f'**`{ctx.author.name}`**: Loop status: **DESATIVADO**')
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
+    # Temporariamente desativado.
+    # TODO: Verificar o por que não funciona.
+    # @commands.command(aliases=["loop_all", "loop_song", "loopall", "loopsong"])
+    # async def loop(self, ctx: commands.Context, *, loop: str =None):
+    #     """
+    #     Set the loop mode.
+
+    #     Parameters:
+    #     - loop (str, optional): The desired loop mode (all, single, or off).
+
+    #     Example usage:
+    #     !loop all
+    #     """
+    #     vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
+    #     if loop:
+    #         loop = loop.lower().strip()
+    #         if loop in ["all", "queue"]:
+    #             vc.queue.loop = False
+    #             vc.queue.loop_all = True
+    #             await ctx.send(f'**`{ctx.author.name}`**: Definiu o loop para: **QUEUE**')
+    #         elif loop == ["single", "song"]:
+    #             vc.queue.loop_all = False
+    #             vc.queue.loop = True
+    #             await ctx.send(f'**`{ctx.author.name}`**: Definiu o loop para: **SONG**')
+    #         elif loop == ["off", "disable", "disabled"]:
+    #             vc.queue.loop = False
+    #             vc.queue.loop = False
+    #             await ctx.send(f'**`{ctx.author.name}`**: Loop status: **DESATIVADO**')
+    #     else:
+    #         if not vc.queue.loop and not vc.queue.loop_all:
+    #             vc.queue.loop = True
+    #             vc.queue.loop_all = False
+    #             await ctx.send(f'**`{ctx.author.name}`**: Definiu o loop para: **SONG**')
+    #         elif vc.queue.loop and not vc.queue.loop_all:
+    #             vc.queue.loop = False
+    #             vc.queue.loop_all = True
+    #             await ctx.send(f'**`{ctx.author.name}`**: Definiu o loop para: **QUEUE**')
+    #         elif vc.queue.loop_all and not vc.queue.loop:
+    #             vc.queue.loop = False
+    #             vc.queue.loop = False
+    #             await ctx.send(f'**`{ctx.author.name}`**: Loop status: **DESATIVADO**')
     
     @commands.command(aliases=['now_playing', 'np'])
     async def nowplaying(self, ctx: commands.Context):
-        """Show the current song."""
+        """
+        Show the current song.
+
+        Parameters:
+
+        Example usage:
+        !nowplaying
+        """
         # Criando uma variavel para gerenciar o player do bot.
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
         if vc.current:
-            embed = discord.Embed(color=discord.Color.green())
-            if not vc.current.is_stream:
-                current_time = str(timedelta(seconds=int(vc.position/1000)))
-                total_time = str(timedelta(seconds=int(vc.current.duration/1000)))
-                embed.title = f'Now Playing: **`{current_time} of {total_time}`**'
-            else:
-                embed.title = f'Now Playing:'
-            embed.description = f'[{vc.current.title}]({vc.current.uri})'
+            embed = NowPlayingEmbed(vc, None)
+            np_manager: NowPlayingManager = get_nowplaying_manager(self, ctx.guild.id)
             message = await ctx.send(embed=embed)
-    
-            CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
-            CACHED_BOT_DICT[ctx.guild.id]["LastCTX"] = ctx
-            CACHED_BOT_DICT[ctx.guild.id]["LastNPMessage"] = message
-            CACHED_BOT_DICT[ctx.guild.id]["Player"] = vc
-
+            np_manager.last_np_message = message
     
 async def setup(bot: commands.Bot):
     await bot.add_cog(Player(bot))

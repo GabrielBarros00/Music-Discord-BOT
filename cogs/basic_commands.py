@@ -1,3 +1,5 @@
+import logging
+
 import discord
 from discord.ext import commands
 
@@ -10,7 +12,7 @@ class BasicCommands(commands.Cog):
         
     @commands.Cog.listener()
     async def on_ready(self) -> None:
-        print(f'Logged in {self.bot.user} | {self.bot.user.id}')
+        logging.info(f'Logged in {self.bot.user} | {self.bot.user.id}')
         await self.bot.change_presence(
                                     activity=discord.Game(name="Mention me to see the server prefix."),
                                     status=discord.Status.online

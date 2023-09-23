@@ -3,7 +3,6 @@ from discord.ext import commands
 from wavelink import (Equalizer, Filter, Karaoke, LowPass, Rotation, Timescale,
                       Vibrato)
 
-from constants import CACHED_BOT_DICT
 from utils import get_wavelink_player
 
 
@@ -15,6 +14,12 @@ class Filters(commands.Cog):
     async def equalizer(self, ctx: commands.Context, *, num: int | float):
         """
         Set Equalizer bass on Player.
+
+        Parameters:
+        - num (int | float): The bass level between 0 to 100.
+
+        Example usage:
+        !equalizer 50
         """
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
         if not num >= 0 or not num <= 100:
@@ -23,12 +28,16 @@ class Filters(commands.Cog):
             vc._filter.equalizer = Equalizer(name="BASS", bands=[(0, float(num / 100)), (1, float(num / 100)), (2, float(num / 100))])
             await vc.set_filter(vc._filter)
             await ctx.send('**`Equalizer modified!`**')
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
     @commands.command()
     async def karaoke(self, ctx: commands.Context):
         """
         Set Karaoke mode on Player.
+
+        Parameters:
+
+        Example usage:
+        !karaoke
         """
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
         if not vc._filter.karaoke:
@@ -38,12 +47,17 @@ class Filters(commands.Cog):
             vc._filter.karaoke = None
             await ctx.send('**`Karaoke disabled!`**')
         await vc.set_filter(vc._filter)
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
     @commands.command()
     async def vibrato(self, ctx: commands.Context, *, num: int | float):
         """
         Set Vibrato on Player.
+
+        Parameters:
+        - num (int | float): The vibrato value between 0 to 140.
+
+        Example usage:
+        !vibrato 75
         """
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
         if not num >= 0 or not num <= 140:
@@ -53,12 +67,17 @@ class Filters(commands.Cog):
             vc._filter.vibrato = Vibrato(frequency=vibrato_value, depth=vibrato_value/14)
             await vc.set_filter(vc._filter)
             await ctx.send('**`Vibrato modified!`**')
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
     @commands.command()
     async def pitch(self, ctx: commands.Context, *, num: int | float):
         """
         Set Pitch on Player.
+
+        Parameters:
+        - num (int | float): The pitch value between 0 to 10 (Default: 1).
+
+        Example usage:
+        !pitch 2.5
         """
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
         if not num >= 0 or not num <= 10:
@@ -67,12 +86,17 @@ class Filters(commands.Cog):
             vc._filter.timescale = Timescale(pitch=num)
             await vc.set_filter(vc._filter)
             await ctx.send('**`Pitch modified!`**')
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
     @commands.command(aliases=["3d", "3dsound", "3d_sound"])
     async def rotation(self, ctx: commands.Context, *, num: int | float):
         """
         Set Rotation/3D Audio on Player.
+
+        Parameters:
+        - num (int | float): The rotation speed between 0 to 100.
+
+        Example usage:
+        !rotation 40
         """
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
         if not num >= 0 or not num <= 100:
@@ -81,12 +105,17 @@ class Filters(commands.Cog):
             vc._filter.rotation = Rotation(speed=num/100)
             await vc.set_filter(vc._filter)
             await ctx.send('**`Rotation modified!`**')
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
     @commands.command(aliases=["low_pass", "lp"])
     async def lowpass(self, ctx: commands.Context, *, num: int | float):
         """
         Set LowPass on Player.
+
+        Parameters:
+        - num (int | float): The smoothing value between 0 to 100.
+
+        Example usage:
+        !lowpass 40
         """
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
         if not num >= 0 or not num <= 100:
@@ -95,12 +124,17 @@ class Filters(commands.Cog):
             vc._filter.low_pass = LowPass(smoothing=num)
             await vc.set_filter(vc._filter)
             await ctx.send('**`LowPass modified!`**')
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
     @commands.command(aliases=["reset_filters"])
     async def resetfilters(self, ctx: commands.Context):
         """
         Reset all filters on Player.
+
+        Parameters:
+        - ctx (commands.Context): The command message context.
+
+        Example usage:
+        !resetfilters
         """
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
         await vc.set_filter(Filter())

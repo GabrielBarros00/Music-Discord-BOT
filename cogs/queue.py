@@ -4,8 +4,8 @@ import discord
 import wavelink
 from discord.ext import commands
 
-from constants import CACHED_BOT_DICT
-from utils import get_wavelink_player, database_manager
+from utils import (NowPlayingManager, database_manager, get_nowplaying_manager,
+                   get_wavelink_player)
 
 
 class Queue(commands.Cog):
@@ -15,7 +15,12 @@ class Queue(commands.Cog):
     @commands.command()
     async def clear(self, ctx: commands.Context):
         """
-        Clear the current queue list.
+        Clears the current queue list.
+
+        Parameters:
+
+        Example usage:
+        !clear
         """
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
         queue = vc.queue
@@ -24,32 +29,44 @@ class Queue(commands.Cog):
         else:
             queue.clear()
             await ctx.send(f'**`{ctx.author.name}`**: Cleared the Queue!')
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
     @commands.command(aliases=["clearhistory"])
     async def clear_history(self, ctx: commands.Context):
         """
-        Clear the current queue history.
+        Clears the current queue history.
+
+        Parameters:
+
+        Example usage:
+        !clearhistory
         """
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
         vc.queue.history.clear()
         await ctx.send("**`Queue history cleared!`**")
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
     @commands.command(aliases=["queuereset"])
     async def queue_reset(self, ctx: commands.Context):
         """
-        Reset completely the queue, clearing all queue and remaing configs.
+        Resets the queue completely, clearing all queue and remaining configs.
+
+        Parameters:
+
+        Example usage:
+        !queuereset
         """
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
         vc.queue.reset()
         await ctx.send("**`Queue history cleared!`**")
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
     @commands.command(aliases=['misturar'])
     async def shuffle(self, ctx: commands.Context):
         """
-        Randomize the current queue.
+        Randomizes the current queue.
+
+        Parameters:
+
+        Example usage:
+        !shuffle
         """
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
         queue = vc.queue
@@ -59,22 +76,32 @@ class Queue(commands.Cog):
             # Randomizando a fila de músicas no player.
             queue.shuffle()
             await ctx.send(f'**`{ctx.author.name}`**: Shuffled all the songs!')
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
     @commands.command(aliases=['autoqueue'])
     async def auto_queue(self, ctx: commands.Context):
         """
-        Set if queue will be populated with similar songs based on Youtube or Spotify recomendation.
+        Sets if the queue will be populated with similar songs based on YouTube or Spotify recommendations.
+
+        Parameters:
+
+        Example usage:
+        !autoqueue
         """
         current_autoqueue = database_manager.get_values(int(ctx.guild.id), 'auto_queue')["auto_queue"]
         database_manager.update_values(int(ctx.guild.id), auto_queue=not current_autoqueue)
         await ctx.send(f'The Auto Queue is now set to **{not current_autoqueue}**')
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
     @commands.command(aliases=['movetrack', 'move'])
     async def move_track(self, ctx: commands.Context, pos1: int, pos2: int):
         """
-        Move track to a specific position in queue.
+        Moves a track to a specific position in the queue.
+
+        Parameters:
+        - pos1 (int): The current position of the track.
+        - pos2 (int): The target position to move the track to.
+
+        Example usage:
+        !move 3 1
         """
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
         queue = vc.queue
@@ -89,22 +116,31 @@ class Queue(commands.Cog):
             await ctx.send(f'**`{ctx.author.name}`**: Moved **{track.title}** to **{pos2}º** in Queue.')
             del queue._queue[pos1-1]
             queue._queue.insert(pos2 - 1, track)
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
     @commands.command(aliases=['auto_shuffle', 'toggleshuffle', 'toggle_autoshuffle'])
     async def autoshuffle(self, ctx: commands.Context):
         """
-        Set if Playlists will be shuffled before being added to queue.
+        Sets if playlists will be shuffled before being added to the queue.
+
+        Parameters:
+
+        Example usage:
+        !autoshuffle
         """
         current_autoshuffle = database_manager.get_values(int(ctx.guild.id), 'auto_shuffle')["auto_shuffle"]
         database_manager.update_values(int(ctx.guild.id), auto_shuffle=not current_autoshuffle)
         await ctx.send(f'The Auto Shuffle is now set to **{not current_autoshuffle}**')
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
     @commands.command(aliases=["remover", "remove"])
     async def remove_track(self, ctx: commands.Context, *, pos: int):
         """
-        Remove an specific track in queue passing the position.
+        Removes a specific track in the queue by specifying its position.
+
+        Parameters:
+        - pos (int): The position of the track to be removed.
+
+        Example usage:
+        !remove 2
         """
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
         if int(pos) - 1 >= vc.queue.count or int(pos) <= 0:
@@ -113,18 +149,23 @@ class Queue(commands.Cog):
             index = int(pos)-1
             await ctx.send(f'**`{ctx.author.name}`**: Removed **{vc.queue._queue[index].title}** from the Queue.')
             del vc.queue._queue[index]
-        CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
     
     @commands.command(aliases=['q'])
     async def queue(self, ctx: commands.Context):
         """
-        Show the current queued songs.
+        Shows the current queued songs.
+
+        Parameters:
+
+        Example usage:
+        !queue
         """
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
         queue = vc.queue
         if queue.is_empty:
             await ctx.send("**`Queue is empty!`**")
-            CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
+            np_manager: NowPlayingManager = get_nowplaying_manager(self, ctx.guild.id)
+            await np_manager.update_nowplaying(ctx)
         else:
             # Verificando a quantidade real de músicas na fila.
             num_songs_in_queue = len(queue)
@@ -138,7 +179,8 @@ class Queue(commands.Cog):
             song_list = list(queue)[:next_songs]
             embed.description = '\n'.join(f'{song_list.index(name) + 1} - **{name}**' for name in song_list)
             queue_msg = await ctx.send(embed=embed)
-            CACHED_BOT_DICT[ctx.guild.id]["DeleteOLD"] = True
+            np_manager: NowPlayingManager = get_nowplaying_manager(self, ctx.guild.id)
+            await np_manager.update_nowplaying(ctx)
             
             if num_songs_in_queue > next_songs:
                 buttons = [u"\u23EA", u"\u2B05", u"\u27A1", u"\u23E9"]
