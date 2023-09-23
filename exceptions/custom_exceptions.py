@@ -1,0 +1,2 @@
+class CurrentNotPlaying(Exception):
+    pass
