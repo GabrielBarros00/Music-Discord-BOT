@@ -39,6 +39,31 @@ pip install -r requirements.txt
 
 Realizar o download do Lavalink e a excução antes de executarmos o bot.
 Link do Github do Lavalink: https://github.com/lavalink-devs/Lavalink/releases
+
+## Corrigindo erro no WaveLink na versão 2.6.4
+
+Dentro da pasta venv, necessário abrirmos o seguinte arquivo: 
+
+No Linux:
+```bash
+venv/lib/python3.11/site-packages/wavelink/tracks.py
+```
+
+No Windows:
+```bat
+venv\Lib\site-packages\tracks.py
+```
+
+Alterar a linha 205 para:
+```python
+if str(check.host) == 'youtube.com' or str(check.host) == 'www.youtube.com' and check.query.get("list") and not check.query.get("v") or \
+```
+
+Alterar a linha 210 para:
+```python
+elif str(check.host) == 'soundcloud.com' and 'sets' in check.parts and check.query.get("in") == None or str(check.host) == 'www.soundcloud.com' and 'sets' in check.parts and check.query.get("in") == None:
+```
+
 ## Variáveis de Ambiente
 
 Para rodar esse projeto, você vai precisar adicionar as seguintes variáveis de ambiente no seu .env
