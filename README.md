@@ -37,7 +37,7 @@ Na sequencia instalar as libs:
 pip install -r requirements.txt
 ```
 
-Realizar o download do Lavalink e a excução antes de executarmos o bot.
+Realizar o download do Lavalink e a excução antes de executarmos o bot. Testado na versão 3.7.8 do LavaLink.
 Link do Github do Lavalink: https://github.com/lavalink-devs/Lavalink/releases
 
 ## Corrigindo erro no WaveLink na versão 2.6.4
