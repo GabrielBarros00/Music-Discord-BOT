@@ -1,4 +1,4 @@
-# Music Bot Discords
+# Music Bot Discord
 
 Um Bot para discord que tem a unica função de tocar vídeo/música e/ou alguns tipos de stream. Como: Youtube, SoundCloud, Spotify, Twitch, HTTP Stream...
 
