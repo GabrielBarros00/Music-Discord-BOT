@@ -15,7 +15,7 @@ Clone o projeto
 ```
 
 
-Recomendado Python 3.10 ou mais recente.
+Testado na versão 3.11.5 do Python (Recomendado 3.10 ou superior).
 ```bash
 python -m venv venv
 ```
