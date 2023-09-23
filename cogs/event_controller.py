@@ -1,4 +1,6 @@
 import asyncio
+from datetime import timedelta, datetime
+import pytz
 
 import discord
 import wavelink
@@ -17,6 +19,11 @@ async def update_nowplaying(self, guild_id: int, event: [TrackEventType] = None)
         _player = np_manager.player
         last_ctx = np_manager.ctx
         last_np_message = np_manager.last_np_message
+        
+        
+        if last_np_message:
+            if last_np_message.created_at + timedelta(hours=1) < datetime.now(tz=pytz.UTC):
+                delete_old = last_np_message
         
         if delete_old:
             try:

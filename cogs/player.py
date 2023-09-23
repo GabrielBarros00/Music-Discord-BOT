@@ -77,14 +77,9 @@ class Player(commands.Cog):
             await ctx.message.delete()
         else:
             await ctx.message.delete()
-        np_manager: NowPlayingManager = get_nowplaying_manager(self, ctx.guild.id)
-        if np_manager.last_np_message:
-            try:
-                await np_manager.last_np_message.delete()
-            except discord.NotFound:
-                pass
-        message = await ctx.send(embed=embed)
-        np_manager.last_np_message = message
+            
+        await ctx.send(embed=embed)
+        
         await play_track(track)
         
     
