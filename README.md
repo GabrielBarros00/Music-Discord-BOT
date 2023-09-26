@@ -1,10 +1,10 @@
 # Music Bot Discord
 
-Um Bot para discord que tem a unica função de tocar vídeo/música e/ou alguns tipos de stream. Como: Youtube, SoundCloud, Spotify, Twitch, HTTP Stream...
+A Discord bot with the sole function of playing videos/music and/or certain types of streams, such as YouTube, SoundCloud, Spotify, Twitch, and HTTP Stream.
 
-## Instalação
+## Installation
 
-Clone o projeto
+Clone the project
 
 ```bash
   git clone https://github.com/GabrielBarros00/Music-Discord-BOT
@@ -15,12 +15,12 @@ Clone o projeto
 ```
 
 
-Testado na versão 3.11.5 do Python (Recomendado 3.10 ou superior).
+Tested on Python version 3.11.5 (Recommended 3.10 or higher).
 ```bash
 python -m venv venv
 ```
 
-E acessar a venv para a instalação das bibliotecas necessárias para execução.
+Activate the virtual environment and install the necessary libraries for execution.
 
 Linux:
 ```bash
@@ -31,42 +31,42 @@ Windows:
 ```bat
 .\venv\Scripts\activate
 ```
-Na sequencia instalar as libs:
+Then, install the required libraries:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Realizar o download do Lavalink e a excução antes de executarmos o bot. Testado na versão 3.7.8 do LavaLink.
-Link do Github do Lavalink: https://github.com/lavalink-devs/Lavalink/releases
+Download and run Lavalink before running the bot. Tested on LavaLink version 3.7.8.
+Lavalink Github Link: https://github.com/lavalink-devs/Lavalink/releases
 
-## Corrigindo erro no WaveLink na versão 2.6.4
+## Fixing error in WaveLink version 2.6.4
 
-Dentro da pasta venv, necessário abrirmos o seguinte arquivo: 
+Inside the venv folder, you need to open the following file:
 
-No Linux:
+On Linux
 ```bash
 venv/lib/python3.11/site-packages/wavelink/tracks.py
 ```
 
-No Windows:
+On Windows:
 ```bat
 venv\Lib\site-packages\tracks.py
 ```
 
-Alterar a linha 205 para:
+Change line 205 to:
 ```python
 if str(check.host) == 'youtube.com' or str(check.host) == 'www.youtube.com' and check.query.get("list") and not check.query.get("v") or \
 ```
 
-Alterar a linha 210 para:
+Change line 210 to:
 ```python
 elif str(check.host) == 'soundcloud.com' and 'sets' in check.parts and check.query.get("in") == None or str(check.host) == 'www.soundcloud.com' and 'sets' in check.parts and check.query.get("in") == None:
 ```
 
-## Variáveis de Ambiente
+## Environment Variables
 
-Para rodar esse projeto, você vai precisar adicionar as seguintes variáveis de ambiente no seu .env
+To run this project, you will need to add the following environment variables to your .env file:
 
 `SPOTIFY_CLIENT_ID`
 
@@ -79,9 +79,9 @@ Para rodar esse projeto, você vai precisar adicionar as seguintes variáveis de
 `LAVALINK_PASSWORD`
 
 
-## Rodando localmente
+## Running Locally
 
-Com a **venv** ativada, agora podemos iniciar o bot utilizando o seguinte comando na pasta raiz do projeto:
+With the venv activated, you can now start the bot using the following command in the project's root folder:
 
 ```bash
 python __main__.py
