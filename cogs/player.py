@@ -100,16 +100,16 @@ class Player(commands.Cog):
             vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
             
             vc.queue.reset()
-            if vc.queue.is_empty:
-                guild_id = int(ctx.guild.id)
-                np_manager: NowPlayingManager = get_nowplaying_manager(self, guild_id)
-                last_np_message = np_manager.last_np_message
-                if last_np_message:
-                    try:
-                        await last_np_message.delete()
-                    except discord.NotFound:
-                        pass
-                    last_np_message: discord.Message = None
+            guild_id = int(ctx.guild.id)
+            np_manager: NowPlayingManager = get_nowplaying_manager(self, guild_id)
+            last_np_message = np_manager.last_np_message
+            if last_np_message:
+                try:
+                    await last_np_message.delete()
+                except discord.NotFound:
+                    pass
+                last_np_message: discord.Message = None
+            np_manager.reset_all()
             await vc.disconnect()
             await ctx.send('*⃣ | Disconnected.')
     
