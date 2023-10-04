@@ -104,6 +104,7 @@ async def on_command_error(ctx: commands.Context, error):
 
     # Send the embed to the channel where the error occurred
     await ctx.send(embed=embed)
+    logging.error(str(error))
 
 for cog_file in cogs_files:
     asyncio.run(bot.load_extension(f"cogs.{cog_file}"))
