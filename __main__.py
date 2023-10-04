@@ -76,6 +76,35 @@ async def on_command_completion(ctx: commands.Context):
     voicechannel_name = f"[{ctx.voice_client.channel}]" if ctx.voice_client else ""
     logging.info(f"[{ctx.guild.id}] {ctx.guild.name} ({ctx.message.channel.name}){voicechannel_name}: {ctx.message.content}")
 
+@bot.event
+async def on_command_error(ctx: commands.Context, error):
+    # Check if the error is a CommandNotFound
+    if isinstance(error, commands.CommandNotFound):
+        return
+
+    # Create an embed to display information about the error
+    embed = discord.Embed(
+        title="Error while executing the command",
+        color=discord.Color.red()
+    )
+
+    # Add information about the command that caused the error
+    embed.add_field(
+        name="Command",
+        value=ctx.message.content,
+        inline=False
+    )
+
+    # Add information about the error itself
+    embed.add_field(
+        name="Error",
+        value=str(error),
+        inline=False
+    )
+
+    # Send the embed to the channel where the error occurred
+    await ctx.send(embed=embed)
+
 for cog_file in cogs_files:
     asyncio.run(bot.load_extension(f"cogs.{cog_file}"))
 
