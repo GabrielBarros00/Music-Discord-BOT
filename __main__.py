@@ -70,8 +70,11 @@ async def before_command(ctx: commands.Context):
 @bot.event
 async def on_command_completion(ctx: commands.Context):
     if not ctx.command.name in ["queue", "disconnect"]:
-        np_manager: NowPlayingManager = get_nowplaying_manager(ctx, ctx.guild.id)
-        await np_manager.update_nowplaying(ctx)
+        if hasattr(ctx.command, "ignore_execution"):
+            pass
+        else:
+            np_manager: NowPlayingManager = get_nowplaying_manager(ctx, ctx.guild.id)
+            await np_manager.update_nowplaying(ctx)
     # Este código será executado após a conclusão de qualquer comando
     voicechannel_name = f"[{ctx.voice_client.channel}]" if ctx.voice_client else ""
     logging.info(f"[{ctx.guild.id}] {ctx.guild.name} ({ctx.message.channel.name}){voicechannel_name}: {ctx.message.content}")

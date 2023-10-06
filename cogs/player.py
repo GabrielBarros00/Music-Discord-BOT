@@ -53,7 +53,7 @@ class Player(commands.Cog):
                 else:
                     await vc.queue.put_wait(track)
             if not vc.is_playing():
-                await vc.play(vc.queue.get(), volume=database_manager.get_values(ctx.guild.id, "volume")["volume"], populate=database_manager.get_values(ctx.guild.id, "auto_queue")["auto_queue"])
+                await vc.play(vc.queue.get(), volume=database_manager.get_values(ctx.guild.id, "volume")["volume"], populate=bool(database_manager.get_values(ctx.guild.id, "auto_queue")["auto_queue"]))
         
         auto_shuffle = database_manager.get_values(int(ctx.guild.id), 'auto_shuffle')["auto_shuffle"]
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
@@ -244,8 +244,16 @@ class Player(commands.Cog):
         """
         vc: wavelink.Player = await get_wavelink_player(ctx=ctx)
         if not vc.queue.is_empty or vc.current:
-            await ctx.send(f'**`{ctx.author.name}`**: Skiped **{vc.current.title}**.')
-            await vc.stop()
+            auto_queue = bool(database_manager.get_values(int(vc.guild.id), "auto_queue")["auto_queue"])
+            await ctx.send(f'**`{ctx.author.name}`**: Skipped **{vc.current.title}**.')
+            if vc.queue.is_empty:
+                if auto_queue:
+                    await vc.stop()
+                else:
+                    ctx.command.ignore_execution = True
+                    await ctx.invoke(self.bot.get_command("disconnect"))
+            else:
+                await vc.stop()
         else:
             await ctx.send("**`Queue is empty!`**")
     
