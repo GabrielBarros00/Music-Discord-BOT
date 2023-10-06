@@ -1,15 +1,16 @@
 import asyncio
-from datetime import timedelta, datetime
-import pytz
+from datetime import datetime, timedelta
 
 import discord
+import pytz
 import wavelink
 from discord.ext import commands
 from wavelink import (Node, TrackEventPayload, TrackEventType,
                       WebsocketClosedPayload)
 
 from utils import (EmptyNowPlayingManager, NowPlayingEmbed, NowPlayingManager,
-                   get_nowplaying_manager, get_wavelink_player)
+                   database_manager, get_nowplaying_manager,
+                   get_wavelink_player)
 
 
 async def update_nowplaying(self, guild_id: int, event: [TrackEventType] = None):
@@ -69,7 +70,8 @@ class EventsController(commands.Cog):
     async def on_wavelink_track_end(self, payload: TrackEventPayload) -> None:
         # print(f"Track Ended: {dict(payload.__dict__)}")
         vc : wavelink.Player = payload.player
-        if vc.queue.is_empty:
+        auto_queue = database_manager.get_values(int(vc.guild.id), "auto_queue")["auto_queue"]
+        if vc.queue.is_empty and not auto_queue:
             await asyncio.sleep(5)
             guild_id = int(payload.player.guild.id)
             np_manager: NowPlayingManager = get_nowplaying_manager(self, guild_id)
