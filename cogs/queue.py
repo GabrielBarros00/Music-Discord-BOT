@@ -113,7 +113,7 @@ class Queue(commands.Cog):
             await ctx.send('Invalid Move Track arguments, the positions numbers can\'t be the same.')
         else:
             track = queue._queue[pos1 - 1]
-            await ctx.send(f'**`{ctx.author.name}`**: Moved **{track.title}** to **{pos2}º** in Queue.')
+            await ctx.send(f'**`{ctx.author.name}`**: Moved **{track.title}** to **{pos2}st** in Queue.')
             del queue._queue[pos1-1]
             queue._queue.insert(pos2 - 1, track)
     
