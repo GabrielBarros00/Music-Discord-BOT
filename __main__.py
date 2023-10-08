@@ -30,7 +30,8 @@ def get_prefix(bot, message: discord.Message):
         return data["prefix"]
     else:
         database_manager.create_guild(guild_id=int(message.guild.id))
-        get_prefix(bot=bot, message=message)
+        data = get()
+        return data["prefix"]
 
 class Bot(commands.Bot):
     def __init__(self, env) -> None:
